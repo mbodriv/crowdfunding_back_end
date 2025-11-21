@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth import get_user_model
 
 # Creating a python class definition
 class Fundraiser(models.Model):
@@ -9,6 +10,11 @@ class Fundraiser(models.Model):
     image= models.URLField()
     is_open=models.BooleanField()
     data_created=models.DateTimeField(auto_now_add=True) #we are saying here that the date will automatically be set to the current date when a new record is created.
+    owner = models.ForeignKey(
+       get_user_model(),
+       on_delete=models.CASCADE,
+       related_name='owned_fundraisers'
+     )
 
 class Pledge(models.Model):
     amount= models.IntegerField()
@@ -19,3 +25,10 @@ class Pledge(models.Model):
         on_delete=models.CASCADE,
         related_name='pledges'         
     )
+    supporter= models.ForeignKey(
+            get_user_model(),
+            on_delete=models.CASCADE,
+            related_name='pledges'
+    )
+
+
