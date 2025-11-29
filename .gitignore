@@ -140,6 +140,11 @@ celerybeat.pid
 .venv
 env/
 venv/
+__pycache__/
+*.sqlite3
+*.vscode
+staticfiles
+.env
 ENV/
 env.bak/
 venv.bak/
