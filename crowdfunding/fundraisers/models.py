@@ -9,7 +9,7 @@ class Fundraiser(models.Model):
     goal= models.IntegerField() #this field should contain an integer
     image= models.URLField()
     is_open=models.BooleanField()
-    data_created=models.DateTimeField(auto_now_add=True) #we are saying here that the date will automatically be set to the current date when a new record is created.
+    date_created=models.DateTimeField(auto_now_add=True) #we are saying here that the date will automatically be set to the current date when a new record is created.
     owner = models.ForeignKey(
        get_user_model(),
        on_delete=models.CASCADE,
