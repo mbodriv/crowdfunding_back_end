@@ -36,6 +36,7 @@ class Pledge(models.Model):
         get_user_model(),
         on_delete=models.CASCADE,
         related_name = 'pledges'
+        
     ) 
     notes = models.TextField(blank= True, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
