@@ -1,34 +1,49 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
-# Creating a python class definition
+
 class Fundraiser(models.Model):
-#the following are attributes telling Django what type of fields we want in our database table.
-    title= models.CharField(max_length=200) #we are saying title field can have a max of 200 characters.
-    description = models.TextField()
-    goal= models.IntegerField() #this field should contain an integer
-    image= models.URLField()
-    is_open=models.BooleanField()
-    date_created=models.DateTimeField(auto_now_add=True) #we are saying here that the date will automatically be set to the current date when a new record is created.
+    category_choices = [('Finance', 'Finance'),
+                        ('Tech_Digital', 'Tech & Digital'),
+                        ('Health_Lifestyle', 'Health & Lifestyle'),
+                        ('Career', 'Career'),('Creative_Skills','Creative Skills'),
+                        ('Personal_Development','Personal Development'),('Language','Language & Cultural Exchange')]
+
+    category = models.CharField(max_length=20, choices=category_choices)
+    title= models.CharField(max_length=200)
+    background = models.TextField()
+    years_experience = models.IntegerField()
+    profile_url = models.URLField()
+    is_accepting_mentees=models.BooleanField(default=True)
+    session_length = models.IntegerField(default=60)
+    date_created=models.DateTimeField(auto_now_add=True)
     owner = models.ForeignKey(
-       get_user_model(),
-       on_delete=models.CASCADE,
-       related_name='owned_fundraisers'
-     )
+    get_user_model(),
+    on_delete=models.CASCADE,
+    related_name='fundraiser'
+    )
 
 class Pledge(models.Model):
-    amount= models.IntegerField()
-    comment= models.CharField(max_length=200)
-    anonymous = models.BooleanField()
-    #This tells Django that each Pledge needs to have the ID of a Fundraiser saved in this field. The on_delete functions says, that if a Fundraiser is deleted or doesn't exist, we will also delete the pledge linked to that Fundraiser.
-    fundraiser= models.ForeignKey('Fundraiser',
+    slot = models.OneToOneField('BookingTime',
+        on_delete= models.CASCADE,
+        related_name = 'pledges')
+    fundraiser = models.ForeignKey('Fundraiser',
         on_delete=models.CASCADE,
-        related_name='pledges'         
+        related_name='pledges')
+    mentee = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name = 'pledges'
     )
-    supporter= models.ForeignKey(
-            get_user_model(),
-            on_delete=models.CASCADE,
-            related_name='pledges'
-    )
+    notes = models.TextField(blank= True, null=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
-
+class BookingTime(models.Model):
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    fundraiser = models.ForeignKey(
+        'Fundraiser',
+        on_delete=models.CASCADE,
+        related_name='booking_time'
+    )  
+    
