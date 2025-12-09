@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.apps import apps
 from datetime import timedelta
+from .models import BookingTime
 
 class BookingTimeSerializer(serializers.ModelSerializer):
     
@@ -15,7 +16,7 @@ class BookingTimeSerializer(serializers.ModelSerializer):
     
         if start and fundraiser:
             session_length = fundraiser.session_length
-            auto_end = start + timedelta (minutes= session_length)
+            auto_end = start + timedelta(minutes= session_length)
             data['end_time'] = auto_end
             end = auto_end
         else:

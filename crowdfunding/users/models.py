@@ -13,3 +13,9 @@ class CustomUser(AbstractUser):
     )
     def __str__(self):
         return self.username
+    
+    def is_mentor(self):
+        return self.user_type == "mentor"
+    
+    def is_mentee(self):
+        return self.user_type == "mentee"

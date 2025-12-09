@@ -6,10 +6,10 @@ from rest_framework import status, permissions
 from django.http import Http404
 from .models import Fundraiser, Pledge, BookingTime
 from .serializers import FundraiserSerializer, PledgeSerializer, FundraiserDetailSerializer, BookingTimeSerializer
-from .permissions import IsOwnerOrReadOnly, IsMenteeOrReadOnly, IsPledgeOwnerOrMentorFundraiser
+from .permissions import IsOwnerOrReadOnly, IsMenteeOrReadOnly, IsBookingOwnerOrReadOnly
 
 class FundraiserList(APIView):
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     def get(self,request):
         fundraisers = Fundraiser.objects.all()
         serializer = FundraiserSerializer(fundraisers, many=True)
@@ -26,12 +26,10 @@ class FundraiserList(APIView):
                 serializer.errors,
                 status = status.HTTP_400_BAD_REQUEST
             )
-class FundraiserDetail (APIView):
 
+class FundraiserDetail (APIView):
     permission_classes = [
-        permissions.IsAuthenticatedOrReadOnly,
-        IsOwnerOrReadOnly
-    ]
+        permissions.IsAuthenticatedOrReadOnly,IsOwnerOrReadOnly]
         
     def get_object(self,pk):
         try:
@@ -72,22 +70,17 @@ class FundraiserDetail (APIView):
         )
     
 class PledgeList(APIView):
-   
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, IsMenteeOrReadOnly]
 
     def get(self, request):
-       user = request.user
-       if user.is_mentor:
-           pledges = Pledge.objects.filter(fundraiser__owner=user)
-       else:
-           pledges = Pledge.objects.filter(mentee=user)
-       serializer = PledgeSerializer(pledges, many=True)
-       return Response(serializer.data)
+        pledges = Pledge.objects.all()
+        serializer = PledgeSerializer(pledges, many=True)
+        return Response(serializer.data)
 
     def post(self, request):
        serializer = PledgeSerializer(data=request.data)
        if serializer.is_valid():
-           serializer.save(supporter=request.user)
+           serializer.save(mentee=request.user)
            return Response(
                serializer.data,
                status=status.HTTP_201_CREATED
@@ -98,11 +91,7 @@ class PledgeList(APIView):
        )
     
 class PledgeDetail(APIView):
-
-    permission_classes = [
-        permissions.IsAuthenticatedOrReadOnly,
-        IsMenteeOrReadOnly
-    ]
+    permission_classes = [permissions.IsAuthenticated, IsMenteeOrReadOnly]
         
     def get_object(self,pk):
         try:
@@ -134,7 +123,7 @@ class PledgeDetail(APIView):
         )
 class BookingTimeList(APIView):
     
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, IsBookingOwnerOrReadOnly]
     
     def get(self, request):
         booking_time = BookingTime.objects.all()
@@ -142,20 +131,15 @@ class BookingTimeList(APIView):
         return Response(serializer.data)
     
     def post(self, request):
-        user = request.user
-        if user.is_mentee:
-            return Response(
-                status=status.HTTP_401_UNAUTHORIZED
-            )
         serializer = BookingTimeSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(owner=user)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class BookingTimeDetail(APIView):
 
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, IsBookingOwnerOrReadOnly]
 
     def get_object(self,pk):
         try:
@@ -172,11 +156,6 @@ class BookingTimeDetail(APIView):
     
     def put(self, request, pk):
         booking_time=self.get_object(pk)
-        user = request.user
-        if user.is_mentee:
-            return Response(
-                status=status.HTTP_401_UNAUTHORIZED
-            )
         serializer = BookingTimeSerializer(
             instance = booking_time,
             data = request.data,

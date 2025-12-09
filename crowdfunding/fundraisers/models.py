@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils import timezone
+from datetime import timedelta
 from django.contrib.auth import get_user_model
 
 
@@ -14,7 +16,7 @@ class Fundraiser(models.Model):
     background = models.TextField()
     years_experience = models.IntegerField()
     profile_url = models.URLField()
-    is_accepting_mentees=models.BooleanField(default=True)
+    is_active=models.BooleanField(default=True)
     session_length = models.IntegerField(default=60)
     date_created=models.DateTimeField(auto_now_add=True)
     owner = models.ForeignKey(
@@ -40,7 +42,7 @@ class Pledge(models.Model):
 
 class BookingTime(models.Model):
     start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True, blank=True)
     fundraiser = models.ForeignKey(
         'Fundraiser',
         on_delete=models.CASCADE,
