@@ -1,9 +1,8 @@
-from django.shortcuts import render
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from .models import Fundraiser, Pledge, BookingTime
 from .serializers import FundraiserSerializer, PledgeSerializer, FundraiserDetailSerializer, BookingTimeSerializer
 from .permissions import IsOwnerOrReadOnly, IsMenteeOrReadOnly, IsBookingOwnerOrReadOnly
@@ -121,6 +120,12 @@ class PledgeDetail(APIView):
             serializer.errors,
             status = status.HTTP_400_BAD_REQUEST
         )
+    
+    def delete(self, request, pk):
+        pledge = self.get_object(pk)
+        pledge.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 class BookingTimeList(APIView):
     
     permission_classes = [permissions.IsAuthenticated, IsBookingOwnerOrReadOnly]
@@ -131,11 +136,12 @@ class BookingTimeList(APIView):
         return Response(serializer.data)
     
     def post(self, request):
+        fundraiser_id = request.data.get('fundraiser')
+        fundraiser = get_object_or_404(Fundraiser, id=fundraiser_id, owner=request.user)
         serializer = BookingTimeSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(fundraiser=fundraiser)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class BookingTimeDetail(APIView):
 
@@ -165,4 +171,16 @@ class BookingTimeDetail(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk):
+        booking_time = self.get_object(pk)
+
+        # Check if the slot has a pledge
+        if hasattr(booking_time, 'pledges') and booking_time.pledges is not None:
+            return Response(
+            {"detail": "This slot has a pledge and cannot be deleted."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+        booking_time.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
     

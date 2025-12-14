@@ -8,9 +8,15 @@ class CustomUser(AbstractUser):
     user_type = models.CharField(
         max_length=10,
         choices=USER_TYPES,
-        null=False,
-        blank=False
+        null=True,
+        blank=True
     )
+    def save(self, *args, **kwargs):
+        # Superusers don't need user_type
+        if not self.is_superuser and not self.user_type:
+            raise ValueError("user_type is required for non-superusers")
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.username
     

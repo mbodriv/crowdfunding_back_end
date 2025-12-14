@@ -4,11 +4,21 @@ from datetime import timedelta
 from .models import BookingTime
 
 class BookingTimeSerializer(serializers.ModelSerializer):
+
+    is_booked = serializers.SerializerMethodField()
+    pledge_id = serializers.SerializerMethodField()
     
     class Meta:
         model = apps.get_model('fundraisers.BookingTime')
         fields = '__all__'
         read_only_fields = ['end_time']
+
+    def get_is_booked(self,obj):
+        return hasattr(obj, 'pledges')
+    
+    def get_pledge_id(self,obj):
+        return obj.pledges.id if hasattr(obj, 'pledges') else None
+    
 #Auto-set end time
     def validate(self, data):
         fundraiser = data.get('fundraiser', getattr(self.instance, 'fundraiser', None))
@@ -44,10 +54,16 @@ class BookingTimeSerializer(serializers.ModelSerializer):
 
 class PledgeSerializer(serializers.ModelSerializer):
     mentee = serializers.ReadOnlyField(source='mentee.id')
+    fundraiser = serializers.ReadOnlyField(source='fundraiser.id')
     class Meta:
         model = apps.get_model('fundraisers.Pledge')
         fields ='__all__'
-
+#modifying create dfr method. When someone books a slot, the fundraiser is whatever fundraiser the slot belongs to.
+    def create (self, validated_data):
+        slot = validated_data['slot']
+        validated_data['fundraiser'] = slot.fundraiser
+        return super().create(validated_data)
+    
     def update(self, instance, validated_data):
         instance.slot = validated_data.get('slot', instance.slot)
         instance.notes = validated_data.get('notes', instance.notes)
