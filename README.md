@@ -82,8 +82,98 @@ Key features include:
 
 ### API Spec
 
+**Base URL:** [https://my-fundraiser-7be3066dd2ea.herokuapp.com]
+[API Test Evidence](./API_Tests.pdf)
+
+
+| URL                 | HTTP Method | Purpose                    | Request Body           | Success Response Code | Authentication / Auth |
+| ------------------ | ----------- | -------------------------- | ---------------------- | --------------------- | ----------------------- |
+| /api-token-auth/   | POST        | Obtain auth token          | username, password     | 200 OK                | Public                  |
+| /users/            | GET         | List users (role-filtered) | None                   | 200 OK                | Authenticated           |
+| /users/            | POST        | Create user account        | User fields            | 201 Created           | Public                  |
+| /users/{id}/       | GET         | View user profile          | None                   | 200 OK                | Authenticated (role rules apply)|
+| /users/{id}/       | PUT         | Update own profile         | User fields            | 200 OK                | Owner only              |
+| /fundraisers/      | GET         | List fundraisers           | None                   | 200 OK                | Public                  |
+| /fundraisers/      | POST        | Create fundraiser          | Fundraiser fields      | 201 Created           | Mentor only             |
+| /fundraisers/{id}/ | GET         | View fundraiser details    | None                   | 200 OK                | Public                  |
+| /fundraisers/{id}/ | PUT         | Update fundraiser          | Fundraiser fields      | 200 OK                | Owner mentor only       |
+| /fundraisers/{id}/ | DELETE      | Deactivate fundraiser      | None                   | 200 OK                | Owner mentor only       |
+| /Bookings/         | GET         | List booking slots         | None                   | 200 OK                | Authenticated           |
+| /Bookings/         | POST        | Create booking slot        | start_time, fundraiser | 201 Created           | Owner mentor only       |
+| /Bookings/{id}/    | GET         | View booking slot          | None                   | 200 OK                | Authenticated           |
+| /Bookings/{id}/    | PUT         | Update booking slot        | Slot fields            | 200 OK                | Owner mentor only       |
+| /Bookings/{id}/    | DELETE      | Delete unbooked slot       | None                   | 204 No Content        | Owner mentor only       |
+| /pledges/          | GET         | List pledges               | None                   | 200 OK                | Authenticated           |
+| /pledges/          | POST        | Create pledge              | slot, notes            | 201 Created           | Mentee only             |
+| /pledges/{id}/     | GET         | View pledge                | None                   | 200 OK                | Authenticated           |
+| /pledges/{id}/     | PUT         | Update pledge              | Pledges field          | 200 OK                | Mentee owner only       |
+| /pledges/{id}/     | DELETE      | Cancel pledge              | None                   | 204 No Content        | Mentee owner only       |
+
 
 ### DB Schema
 
+The database is designed around four core entities:
+  - **CustomUser**: represents mentors and mentees
+  - **Fundraiser**: created by mentors to offer mentoring sessions
+  - **BookingTime**: individual time slots for a fundraiser
+  - **Pledge**: a booking made by a mentee for a specific time slot
+  
+<ins>**Entity Relationships**</ins>
+  - A User (mentor) can own many Fundraisers
+  - A Fundraiser can have many BookingTime slots
+  - A BookingTime can have at most one Pledge
+  - A User (mentee) can create many Pledges
+  - A Pledge links:
+    * one mentee
+    * one booking slot
+    * one fundraiser (derived from the slot)
 
+<ins>**Tables and Fields**</ins>
+**CustomUser**
+  * id (PK)
+  * email
+  * password
+  * user_type (mentor or mentee)
+  * first_name
+  * last_name
+Other Django auth fields
 
+**Fundraiser**
+  * id (PK)
+  * owner (FK → CustomUser)
+  * title
+  * category
+  * background
+  * years_experience
+  * profile_url
+  * session_length
+  * is_active
+  * date_created
+    
+  **Relationships**
+One-to-many with BookingTime
+One-to-many with Pledge
+
+**BookingTime**
+  * id (PK)
+  * fundraiser (FK → Fundraiser)
+  * start_time
+  * end_time (auto-calculated from session length)
+
+  **Relationships**
+One-to-one with Pledge
+
+**Pledge**
+  * id (PK)
+  * slot (OneToOne → BookingTime)
+  * fundraiser (FK → Fundraiser)
+  * mentee (FK → CustomUser)
+  * notes
+  * date_created
+    
+**Relationship Rules**
+- Only mentors can create fundraisers and booking slots
+- Booking slots cannot overlap for the same fundraiser
+- A booking slot cannot be edited or deleted once pledged
+- Mentees can only pledge to available (unbooked) slots
+- Fundraiser ownership is enforced at the API level
