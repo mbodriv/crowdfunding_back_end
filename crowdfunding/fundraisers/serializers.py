@@ -73,6 +73,10 @@ class PledgeSerializer(serializers.ModelSerializer):
 
 class FundraiserSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.id')
+    owner_username = serializers.ReadOnlyField(source='owner.username')
+    owner_first_name = serializers.ReadOnlyField(source='owner.first_name')
+    owner_last_name = serializers.ReadOnlyField(source='owner.last_name')
+    
     class Meta:
         model = apps.get_model('fundraisers.Fundraiser')
         fields = '__all__'
