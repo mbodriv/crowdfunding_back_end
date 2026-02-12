@@ -79,8 +79,11 @@ class FundraiserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = apps.get_model('fundraisers.Fundraiser')
-        fields = '__all__'
-        extra_fields = ['owner_username', 'owner_first_name', 'owner_last_name']
+        fields = fields = [
+  'id','owner','owner_username','owner_first_name','owner_last_name',
+  'category','title','background','years_experience','profile_url',
+  'is_active','session_length','date_created']
+
 
 class FundraiserDetailSerializer(FundraiserSerializer):
     pledges = PledgeSerializer(many=True, read_only=True)
