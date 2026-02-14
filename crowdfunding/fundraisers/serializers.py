@@ -89,6 +89,10 @@ class FundraiserDetailSerializer(FundraiserSerializer):
     pledges = PledgeSerializer(many=True, read_only=True)
     booking_time = BookingTimeSerializer(many=True, read_only=True)
 
+    class Meta:
+        model = apps.get_model('fundraisers.Fundraiser')
+        fields = FundraiserSerializer.Meta.fields + ['pledges', 'booking_time']
+
     def update(self, instance, validated_data):
         instance.category = validated_data.get('category', instance.category)
         instance.title = validated_data.get('title', instance.title)
@@ -100,5 +104,4 @@ class FundraiserDetailSerializer(FundraiserSerializer):
         instance.date_created = validated_data.get('date_created', instance.date_created)
         instance.save()
         return instance
-
 
