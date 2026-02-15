@@ -35,9 +35,13 @@ class CustomUserList(APIView):
     def post(self, request):
         serializer = CustomUserSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            user = serializer.save()
+            token, _ = Token.objects.get_or_create(user=user)
             return Response(
-                serializer.data,
+                {
+                    "user": CustomUserSerializer(user).data,
+                    "token": token.key
+                },
                 status=status.HTTP_201_CREATED
             )
         return Response(
